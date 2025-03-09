@@ -1,6 +1,6 @@
 package com.mora.SpiritX_Dev_Titans_02_Server_Side.config;
 
-import com.mora.SpiritX_Dev_Titans_02_Server_Side.service.impl.CustomUserDetailsService;
+import com.mora.SpiritX_Dev_Titans_02_Server_Side.service.impl.PlayerServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,7 +20,7 @@ import java.io.IOException;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final CustomUserDetailsService userDetailsService;
+    private final PlayerServiceImpl.CustomUserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
