@@ -25,49 +25,45 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void registerUser(SignUpRequest request) {
+    public AuthResponse registerUser(SignUpRequest request) {
         Optional<User> existingUser = userRepository.findByUsername(request.getUsername());
+
         if (existingUser.isPresent()) {
-            throw new RuntimeException("User already exists");
+            return new AuthResponse(409, "User already exists", null, null); // 409 Conflict
         }
 
         User user = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
-                .active(false)
+                .active(false) // Account inactive by default
                 .build();
 
         userRepository.save(user);
+
+        return new AuthResponse(201, "User registered successfully. Awaiting admin approval.", null, user.getRole());
     }
 
     @Override
     public AuthResponse authenticate(AuthRequest request) {
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElse(null);
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+        if (user == null) {
+            return new AuthResponse(404, "User not found", null, null); // 404 Not Found
         }
 
-        // Check if the user is active
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            return new AuthResponse(401, "Invalid credentials", null, null); // 401 Unauthorized
+        }
+
         if (!user.isActive()) {
-            return new AuthResponse(
-                    403,                         // HTTP Status Code (Forbidden)
-                    "Your account is pending admin approval.", // Message
-                    null,                         // No token since login failed
-                    user.getRole()                // Role (but the login is rejected)
-            );
+            return new AuthResponse(403, "Your account is pending admin approval.", null, user.getRole()); // 403 Forbidden
         }
 
         String token = jwtUtil.generateToken(user.getUsername());
 
-        return new AuthResponse(
-                200,                        // HTTP Status Code
-                "Login successful",         // Success message
-                token,                      // JWT Token
-                user.getRole()              // Role (ADMIN or USER)
-        );
+        return new AuthResponse(200, "Login successful", token, user.getRole()); // 200 OK
     }
 
 }
