@@ -50,7 +50,24 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Invalid credentials");
         }
 
+        // Check if the user is active
+        if (!user.isActive()) {
+            return new AuthResponse(
+                    403,                         // HTTP Status Code (Forbidden)
+                    "Your account is pending admin approval.", // Message
+                    null,                         // No token since login failed
+                    user.getRole()                // Role (but the login is rejected)
+            );
+        }
+
         String token = jwtUtil.generateToken(user.getUsername());
-        return new AuthResponse(token);
+
+        return new AuthResponse(
+                200,                        // HTTP Status Code
+                "Login successful",         // Success message
+                token,                      // JWT Token
+                user.getRole()              // Role (ADMIN or USER)
+        );
     }
+
 }
